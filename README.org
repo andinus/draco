@@ -1,0 +1,26 @@
+#+SETUPFILE: ~/.emacs.d/org-templates/projects.org
+#+EXPORT_FILE_NAME: index
+#+TITLE: Draco
+
+Draco is a script to convert reddit thread to Org document. It accepts a
+url & prints the Org document to STDOUT.
+
+It'll also print comments along with their replies. It's limited by
+the reddit API.
+
+| Project Home    | [[https://andinus.nand.sh/draco/][Draco]]           |
+| Source Code     | [[https://git.tilde.institute/andinus/draco/][Andinus / Draco]] |
+| GitHub (Mirror) | [[https://github.com/andinus/draco/][Draco - GitHub]]  |
+
+*Tested on*:
+- OpenBSD 6.8 (Perl v5.30.3)
+
+* Installation
+#+BEGIN_SRC sh
+# Clone the project.
+git clone https://git.tilde.institute/andinus/draco && \
+    cd draco
+
+# Install.
+sudo make install
+#+END_SRC
