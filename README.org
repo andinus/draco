@@ -26,7 +26,7 @@ git clone https://git.tilde.institute/andinus/draco && \
     cd draco
 
 # Install dependencies. (OpenBSD)
-doas pkg_add p5-Text-Wrapper p5-JSON-MaybeXS
+doas pkg_add p5-Unicode-LineBreak p5-JSON-MaybeXS
 cpan install HTTP::Tiny
 
 # Install. (Use sudo if doas is not present)
@@ -34,9 +34,9 @@ doas make install
 #+END_SRC
 
 * Dependencies
-** Text::Wrapper
-This is used to wrap the text at 72 characters. Draco can work without
-this module.
+** Unicode::LineBreak
+This is used to wrap the text at 76 columns. Draco can work without this
+module.
 ** JSON::MaybeXS
 This module is required for Draco to work, it can be replaced with any
 other module that parses JSON & produces same data structure.
