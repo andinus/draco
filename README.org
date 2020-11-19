@@ -25,7 +25,9 @@ This was recorded with =asciinema(1)=.
 [[https://asciinema.org/a/373860][https://asciinema.org/a/373860.png]]
 
 + Draco v0.1.2: https://asciinema.org/a/373860
+  - alt-link: https://andinus.nand.sh/static/draco/v0.1.2.cast
 + Draco 2020-11-19: https://asciinema.org/a/373851
+  - alt-link: https://andinus.nand.sh/static/draco/2020-11-19.cast
 * Installation
 #+BEGIN_SRC sh
 # Clone the project.
