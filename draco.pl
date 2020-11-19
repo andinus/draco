@@ -10,12 +10,21 @@ use JSON::MaybeXS;
 use Unicode::LineBreak;
 my $lb = Unicode::LineBreak->new(ColMax => 76); # Default is 76.
 
-my $VERSION = "v0.1.0";
-
 # Printing UTF-8 to STDOUT.
 binmode(STDOUT, "encoding(UTF-8)");
 
-die "usage: draco <url>\n" unless scalar @ARGV;
+my $VERSION = "v0.1.1";
+
+die "usage: draco [-v] <url>\n" unless scalar @ARGV;
+
+# Dispatch table to be parsed before url.
+my %dispatch = (
+    '-v'  => sub { print "Draco $VERSION\n"; exit; },
+);
+if (exists $dispatch{$ARGV[0]}) {
+    # shift @ARGV to get $url in next shift.
+    $dispatch{shift @ARGV}->();
+}
 
 # $url contains the reddit post.
 my $url = shift @ARGV;
