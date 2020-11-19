@@ -7,12 +7,12 @@ use HTTP::Tiny;
 use JSON::MaybeXS;
 
 # For wrapping comment blocks.
-use Text::Wrapper;
-my $wrapper = Text::Wrapper->new(columns => 72 - 1, body_start => '');
+use Unicode::LineBreak;
+my $lb = Unicode::LineBreak->new(ColMax => 76); # Default is 76.
 
 my $VERSION = "v0.1.0";
 
-# Priting UTF-8 to STDOUT.
+# Printing UTF-8 to STDOUT.
 binmode(STDOUT, "encoding(UTF-8)");
 
 die "usage: draco <url>\n" unless scalar @ARGV;
@@ -51,7 +51,8 @@ print ":END:\n";
 
 # Add selftext/url if present.
 print "\n#+BEGIN_SRC markdown\n",
-    " ", $wrapper->wrap($post->{selftext}) =~ s/\n/\n\ /gr,
+    # Break the text at 76 column & add 2 space before every new line.
+    "  ", $lb->break($post->{selftext}) =~ s/\n/\n\ \ /gr, "\n",
     "#+END_SRC\n"
     if scalar $post->{selftext};
 print "$post->{url}\n" if scalar $post->{selftext};
@@ -83,7 +84,9 @@ sub print_comment_chain {
     print ":END:\n";
 
     print "\n#+BEGIN_SRC markdown\n",
-        " ", $wrapper->wrap($comment->{body}) =~ s/\n/\n\ /gr,
+        # Break the text at 76 column & add 2 space before every new
+        # line.
+        "  ", $lb->break($comment->{body}) =~ s/\n/\n\ \ /gr, "\n",
         "#+END_SRC\n";
 
     # If the comment has replies then iterate over those too.
