@@ -6,6 +6,8 @@ use warnings;
 use HTTP::Tiny;
 use JSON::MaybeXS;
 
+use POSIX qw(strftime);
+
 # For wrapping comment blocks.
 use Unicode::LineBreak;
 my $lb = Unicode::LineBreak->new(ColMax => 76); # Default is 76.
@@ -45,6 +47,11 @@ my $post = $json_data->[0]->{data}->{children}->[0]->{data};
 
 # Start the Org document.
 print "#+", "STARTUP:content\n";
+
+# Print the date.
+my $date = strftime '%+', localtime();
+print "#+", "DATE: $date\n";
+print "\n";
 
 # Print the post title.
 print "* ", "$post->{title}\n";
