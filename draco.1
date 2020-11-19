@@ -15,5 +15,17 @@ is a script to convert reddit thread to Org document. It accepts a url
 It'll also print comments along with their replies. It's limited by
 the reddit API.
 .Pp
+.Sh NOTES
+Draco will add a space before every new line. Comments/Posts may
+contain `*' at the start of line & that confuses Org. Org might
+interpret it as a new heading so we add a space before every new line.
+
+All text will be wrapped at 72 characters.
+.Pp
+.Sh WHY?
+I reference things from the web in my Journal & don't want those links
+to break so I save them locally. Previously I used to manually archive
+the whole thread, this automates it.
+.Pp
 .Sh AUTHOR
 .An Andinus Aq Mt andinus@nand.sh
