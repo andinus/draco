@@ -63,6 +63,8 @@ foreach my $detail (qw( subreddit created_utc author permalink
     print ":${detail}: =$post->{$detail}=\n"
         if scalar $post->{$detail};
 }
+# Include the archive date in properties.
+print ":ARCHIVE_DATE: $date\n";
 print ":END:\n";
 
 # Add selftext if present.
