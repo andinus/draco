@@ -15,7 +15,7 @@ my $lb = Unicode::LineBreak->new(ColMax => 76); # Default is 76.
 # Printing UTF-8 to STDOUT.
 binmode(STDOUT, "encoding(UTF-8)");
 
-my $VERSION = "v0.1.1";
+my $VERSION = "v0.1.2";
 
 die "usage: draco [-v] <url>\n" unless scalar @ARGV;
 
