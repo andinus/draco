@@ -6,6 +6,12 @@ use warnings;
 use HTTP::Tiny;
 use JSON::MaybeXS;
 
+# For wrapping comment blocks.
+use Text::Wrapper;
+my $wrapper = Text::Wrapper->new(columns => 72 - 1, body_start => '');
+
+my $VERSION = "v0.1.0";
+
 # Priting UTF-8 to STDOUT.
 binmode(STDOUT, "encoding(UTF-8)");
 
@@ -28,6 +34,10 @@ my $json_data = decode_json($response->{content});
 # $post contains post data
 my $post = $json_data->[0]->{data}->{children}->[0]->{data};
 
+# Start the Org document.
+print "#+", "STARTUP:content\n";
+
+# Print the post title.
 print "* ", "$post->{title}\n";
 
 # Add various details to :PROPERTIES:.
@@ -40,7 +50,9 @@ foreach my $detail (qw( subreddit created_utc author permalink
 print ":END:\n";
 
 # Add selftext/url if present.
-print "\n#+BEGIN_SRC markdown\n", "$post->{selftext}\n", "#+END_SRC\n"
+print "\n#+BEGIN_SRC markdown\n",
+    " ", $wrapper->wrap($post->{selftext}) =~ s/\n/\n\ /gr,
+    "#+END_SRC\n"
     if scalar $post->{selftext};
 print "$post->{url}\n" if scalar $post->{selftext};
 
@@ -70,7 +82,9 @@ sub print_comment_chain {
     }
     print ":END:\n";
 
-    print "\n#+BEGIN_SRC markdown\n", "$comment->{body}\n", "#+END_SRC\n";
+    print "\n#+BEGIN_SRC markdown\n",
+        " ", $wrapper->wrap($comment->{body}) =~ s/\n/\n\ /gr,
+        "#+END_SRC\n";
 
     # If the comment has replies then iterate over those too.
     if (scalar $comment->{replies}) {
