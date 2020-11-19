@@ -53,8 +53,8 @@ my $date = strftime '%+', localtime();
 print "#+", "DATE: $date\n";
 print "\n";
 
-# Print the post title.
-print "* ", "$post->{title}\n";
+# Print the post title & it's link.
+print "* ", "[[$post->{url}][$post->{title}]]\n";
 
 # Add various details to :PROPERTIES:.
 print ":PROPERTIES:\n";
@@ -65,13 +65,12 @@ foreach my $detail (qw( subreddit created_utc author permalink
 }
 print ":END:\n";
 
-# Add selftext/url if present.
+# Add selftext if present.
 print "\n#+BEGIN_SRC markdown\n",
     # Break the text at 76 column & add 2 space before every new line.
     "  ", $lb->break($post->{selftext}) =~ s/\n/\n\ \ /gr, "\n",
     "#+END_SRC\n"
     if scalar $post->{selftext};
-print "$post->{url}\n" if scalar $post->{selftext};
 
 # $comments contains comment data. We are interested in: replies,
 # author, body, created_utc & permalink.
