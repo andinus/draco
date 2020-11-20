@@ -6,7 +6,7 @@
 .Nd a script to convert reddit thread to Org document
 .Sh SYNOPSIS
 .Nm draco
-.Op -v
+.Op Fl dv
 .Ar <url>
 .Sh DESCRIPTION
 .Nm
@@ -15,6 +15,13 @@ is a script to convert reddit thread to Org document. It accepts a url
 
 It'll also print comments along with their replies. It's limited by
 the reddit API.
+
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d
+Turn on debug messages. Debug messages will be printed to STDERR.
+.It Fl v
+Print version.
 .Pp
 .Sh NOTES
 Draco will add 2 spaces before every new line. Comments/Posts may

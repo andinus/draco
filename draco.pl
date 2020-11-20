@@ -15,13 +15,14 @@ my $lb = Unicode::LineBreak->new(ColMax => 76); # Default is 76.
 # Printing UTF-8 to STDOUT.
 binmode(STDOUT, "encoding(UTF-8)");
 
-my $VERSION = "v0.1.2";
+die "usage: draco [-dv] <url>\n" unless scalar @ARGV;
 
-die "usage: draco [-v] <url>\n" unless scalar @ARGV;
-
+my $DEBUG;
+my $VERSION = "v0.1.3";
 # Dispatch table to be parsed before url.
 my %dispatch = (
     '-v'  => sub { print "Draco $VERSION\n"; exit; },
+    '-d'  => sub { $DEBUG = 1; print STDERR "draco: debug on.\n"; },
 );
 if (exists $dispatch{$ARGV[0]}) {
     # shift @ARGV to get $url in next shift.
@@ -35,11 +36,13 @@ my $json_url = "${url}.json";
 my $http = HTTP::Tiny->new( verify_SSL => 1 );
 
 # Fetch the post.
+print STDERR "draco: fetching `$json_url'.\n" if $DEBUG;
 my $response = $http->get($json_url);
 die "Unexpected response - $response->{status}: $response->{reason}"
     unless $response->{success};
 
 # Decode json.
+print STDERR "draco: decoding json response.\n" if $DEBUG;
 my $json_data = decode_json($response->{content});
 
 # $post contains post data
