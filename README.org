@@ -38,6 +38,13 @@ git clone https://git.tilde.institute/andinus/draco && \
 doas pkg_add p5-Unicode-LineBreak p5-JSON-MaybeXS
 cpan install HTTP::Tiny
 
+# Install dependencies. (Debian - apt based)
+sudo apt install libunicode-linebreak-perl libjson-maybexs-perl \
+     libhttp-tiny-perl
+
+# Install dependencies. (Fedora - dnf based)
+sudo dnf install perl-JSON-MaybeXS perl-HTTP-Tiny perl-Unicode-LineBreak
+
 # Install. (Use sudo if doas is not present)
 doas make install
 #+END_SRC
