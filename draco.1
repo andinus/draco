@@ -12,29 +12,29 @@
 .Nm
 is a script to convert reddit thread to Org document. It accepts a url
 & prints the Org document to STDOUT.
-
+.Pp
 It'll also print comments along with their replies. It's limited by
 the reddit API.
-
+.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
 Turn on debug messages. Debug messages will be printed to STDERR.
 .It Fl v
 Print version.
-.Pp
 .Sh NOTES
 Draco will add 2 spaces before every new line. Comments/Posts may
 contain `*' at the start of line & that confuses Org. Org might
 interpret it as a new heading so we add a space before every new line.
-
+.Pp
 All text will be wrapped at 76 characters, including 2 spaces before
 every new line the maximum number of columns becomes 78.
 .Pp
+The date of archive is saved under :PROPERTIES: of the post as
+:ARCHIVE_DATE:.
 .Sh WHY?
 I reference things from the web in my Journal & don't want those links
 to break so I save them locally. Previously I used to manually archive
 the whole thread, this automates it.
-.Pp
 .Sh AUTHOR
 .An Andinus Aq Mt andinus@nand.sh

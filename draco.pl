@@ -91,7 +91,9 @@ sub print_comment_chain {
     my $comment = shift @_;
     my $level = shift @_;
 
-    print "*" x ($level + 2), " ", "$comment->{author}\n";
+    print "*" x ($level + 2), " ", "$comment->{author}";
+    print " [S]" if $comment->{is_submitter};
+    print "\n";
 
     # Print comment details.
     print ":PROPERTIES:\n";
