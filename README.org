@@ -29,7 +29,15 @@ they're listed below. All dependencies are in Debian & Fedora
 repositories.
 
 Check the /News/ section before updating or downloading latest release.
-** Dependencies
+
+1. Download the release:
+   - https://git.tilde.institute/andinus/draco
+   - https://github.com/andinus/draco/releases
+2. Extract the file.
+3. =cd= into the directory.
+4. Run =make install= as root.
+5. Install dependencies.
+* Dependencies
 #+BEGIN_SRC sh
 # Install dependencies. (OpenBSD)
 doas pkg_add p5-Unicode-LineBreak p5-JSON-MaybeXS
@@ -42,23 +50,8 @@ sudo apt install libunicode-linebreak-perl libjson-maybexs-perl \
 # Install dependencies. (Fedora - dnf based)
 sudo dnf install perl-JSON-MaybeXS perl-HTTP-Tiny perl-Unicode-LineBreak
 #+END_SRC
-** v0.1.3
-#+BEGIN_SRC sh
-# Get the release tar.
-curl -O \
-     https://git.tilde.institute/andinus/draco/snapshot/draco-0.1.3.tar.gz
-
-# Extract the files.
-tar xzf draco-0.1.3.tar.gz
-
-# `cd' into the directory.
-cd draco-0.1.3/
-
-# Install. (Use sudo if doas is not present)
-doas make install
-#+END_SRC
 * News
-** v0.2.0  2020-11-23
+** v0.2.0 - 2020-11-23
 This version makes the script lot more complex. If you download only
 small threads then this update is not required.
 
