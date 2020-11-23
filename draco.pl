@@ -15,38 +15,63 @@ my $lb = Unicode::LineBreak->new(ColMax => 76); # Default is 76.
 # Printing UTF-8 to STDOUT.
 binmode(STDOUT, "encoding(UTF-8)");
 
-die "usage: draco [-dv] <url>\n" unless scalar @ARGV;
+die "usage: draco [-dhv] <url>\n" unless scalar @ARGV;
 
 my $DEBUG;
-my $VERSION = "v0.1.3";
+my $VERSION = "v0.2.0";
 # Dispatch table to be parsed before url.
 my %dispatch = (
     '-v'  => sub { print "Draco $VERSION\n"; exit; },
     '-d'  => sub { $DEBUG = 1; print STDERR "draco: debug on.\n"; },
+    '-h'  => sub { print qq{Draco $VERSION
+
+Options:
+    -d
+        Turn on debug messages. Debug messages will be printed to
+        STDERR.
+    -h
+        Print this help.
+    -v
+        Print version.
+
+Environment Variables:
+    FETCH_ALL
+        Fetch all comments. This will make multiple HTTP calls to
+        reddit. This doesn't fetch *all* the comments.
+};
+                   exit;
+               },
 );
 if (exists $dispatch{$ARGV[0]}) {
     # shift @ARGV to get $url in next shift.
     $dispatch{shift @ARGV}->();
 }
 
-# $url contains the reddit post.
+# $url contains the reddit post. Raise the limit to 500 comments which
+# is the maximum reddit allows.
 my $url = shift @ARGV;
-my $json_url = "${url}.json";
+my $json_url = "${url}.json?limit=500&sort=top";
 
 my $http = HTTP::Tiny->new( verify_SSL => 1 );
 
 # Fetch the post.
-print STDERR "draco: fetching `$json_url'.\n" if $DEBUG;
-my $response = $http->get($json_url);
-die "Unexpected response - $response->{status}: $response->{reason}"
-    unless $response->{success};
+print STDERR "fetching `$json_url'.\n" if $DEBUG;
+my $response = get_response($json_url);
 
 # Decode json.
-print STDERR "draco: decoding json response.\n" if $DEBUG;
+print STDERR "decoding json response.\n" if $DEBUG;
 my $json_data = decode_json($response->{content});
 
 # $post contains post data
 my $post = $json_data->[0]->{data}->{children}->[0]->{data};
+
+# $comments contains comment data. We are interested in: replies,
+# author, body, created_utc & permalink.
+my $comments = $json_data->[1]->{data}->{children};
+
+# Print total top-level comments.
+print STDERR "total top-level comments: ",
+    scalar($comments->@*), "\n" if $DEBUG;
 
 # Start the Org document.
 print "#+", "STARTUP:content\n";
@@ -66,8 +91,9 @@ foreach my $detail (qw( subreddit created_utc author permalink
     print ":${detail}: =$post->{$detail}=\n"
         if scalar $post->{$detail};
 }
-# Include the archive date in properties.
+# Include the archive date & total top-level comments in properties.
 print ":ARCHIVE_DATE: $date\n";
+print ":TOTAL_TOP_LEVEL_COMMENTS: ", scalar($comments->@*), "\n";
 print ":END:\n";
 
 # Add selftext if present.
@@ -77,12 +103,39 @@ print "\n#+BEGIN_SRC markdown\n",
     "#+END_SRC\n"
     if scalar $post->{selftext};
 
-# $comments contains comment data. We are interested in: replies,
-# author, body, created_utc & permalink.
-my $comments = $json_data->[1]->{data}->{children};
+my (@http_calls, @shell_comments, %counter);
+$counter{skipped_due_to_more} = 0;
+$counter{print_comment_chain_call} = 0;
+
 # Iterate over top-level comments.
 foreach my $comment ($comments->@*) {
+    if ($comment->{kind} eq "more"
+        and $comment->{data}->{id} eq "_") {
+        $counter{skipped_due_to_more}++;
+        next;
+    }
     print_comment_chain($comment->{data}, 0);
+}
+
+print STDERR "total http calls: ",
+    scalar @http_calls, "\n" if $DEBUG;
+print STDERR "total shell comments: ",
+    scalar @shell_comments, "\n" if $DEBUG and scalar @shell_comments;
+print STDERR "total print_comment_chain calls: ",
+    $counter{print_comment_chain_call}, "\n" if $DEBUG;
+
+# This is equivalent to "continue this thread ->" we see on
+# old.reddit.com threads.
+print STDERR "total comments skipped due to more: ",
+    $counter{skipped_due_to_more}, "\n" if $DEBUG;
+
+sub get_response {
+    my $url = shift @_;
+    my $response = $http->get($url);
+    push @http_calls, $url;
+    die "Unexpected response - $response->{status}: $response->{reason} : $url"
+        unless $response->{success};
+    return $response;
 }
 
 # print_comment_chain will print the whole chain of comment while
@@ -90,6 +143,46 @@ foreach my $comment ($comments->@*) {
 sub print_comment_chain {
     my $comment = shift @_;
     my $level = shift @_;
+
+    $counter{print_comment_chain_call}++;
+
+    # $comment->{author} & $comment->{body} not being present means
+    # that it's a shell comment. We can get it by making another HTTP
+    # call.
+    unless ($comment->{author}) {
+        push @shell_comments, $comment->{id};
+        return unless $ENV{FETCH_ALL};
+        unless ( eval {
+            my $json_url = "${url}/$comment->{id}.json?limit=500&sort=top";
+
+            # Fetch the comment.
+            my $response = get_response($json_url);
+
+            # Decode json.
+            my $json_data = decode_json($response->{content});
+
+            # $comments contains comment data. We are interested in: replies,
+            # author, body, created_utc & permalink.
+            my $comments = $json_data->[1]->{data}->{children};
+
+            foreach my $comment ($comments->@*) {
+                if ($comment->{kind} eq "more"
+                    and $comment->{data}->{id} eq "_") {
+                    $counter{skipped_due_to_more}++;
+                    next;
+                }
+                print_comment_chain($comment->{data}, $level);
+            }
+
+            return 1;
+        } ) {
+            print STDERR "parsing shell comment: $comment->{id} : failed\n";
+        }
+
+        # This comment thread has been parsed, move on to the text
+        # one.
+        return;
+    }
 
     print "*" x ($level + 2), " ", "$comment->{author}";
     print " [S]" if $comment->{is_submitter};
@@ -114,6 +207,11 @@ sub print_comment_chain {
     # If the comment has replies then iterate over those too.
     if (scalar $comment->{replies}) {
         foreach my $reply ($comment->{replies}->{data}->{children}->@*) {
+            if ($reply->{kind} eq "more"
+                and $reply->{data}->{id} eq "_") {
+                $counter{skipped_due_to_more}++;
+                next;
+            }
             print_comment_chain($reply->{data}, $level + 1);
         }
     }

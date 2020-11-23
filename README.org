@@ -3,17 +3,12 @@
 #+TITLE: Draco
 
 Draco is a script to convert reddit thread to Org document. It accepts a
-url & prints the Org document to STDOUT.
-
-It'll also print comments along with their replies. It's limited by
-the reddit API.
+url & prints the Org document to STDOUT. It'll also print comments along
+with their replies.
 
 | Project Home    | [[https://andinus.nand.sh/draco/][Draco]]           |
 | Source Code     | [[https://git.tilde.institute/andinus/draco/][Andinus / Draco]] |
 | GitHub (Mirror) | [[https://github.com/andinus/draco/][Draco - GitHub]]  |
-
-*Tested on*:
-- OpenBSD 6.8 (Perl v5.30.3)
 
 * Why?
 I reference things from the web in my Journal & don't want those links
@@ -29,11 +24,13 @@ This was recorded with =asciinema(1)=.
 + Draco 2020-11-19: https://asciinema.org/a/373851
   - alt-link: https://andinus.nand.sh/static/draco/2020-11-19.cast
 * Installation
-#+BEGIN_SRC sh
-# Clone the project.
-git clone https://git.tilde.institute/andinus/draco && \
-    cd draco
+Follow these instructions to get draco & then install the dependencies,
+they're listed below. All dependencies are in Debian & Fedora
+repositories.
 
+Check the /News/ section before updating or downloading latest release.
+** Dependencies
+#+BEGIN_SRC sh
 # Install dependencies. (OpenBSD)
 doas pkg_add p5-Unicode-LineBreak p5-JSON-MaybeXS
 cpan install HTTP::Tiny
@@ -44,17 +41,38 @@ sudo apt install libunicode-linebreak-perl libjson-maybexs-perl \
 
 # Install dependencies. (Fedora - dnf based)
 sudo dnf install perl-JSON-MaybeXS perl-HTTP-Tiny perl-Unicode-LineBreak
+#+END_SRC
+** v0.1.3
+#+BEGIN_SRC sh
+# Get the release tar.
+curl -O \
+     https://git.tilde.institute/andinus/draco/snapshot/draco-0.1.3.tar.gz
+
+# Extract the files.
+tar xzf draco-0.1.3.tar.gz
+
+# `cd' into the directory.
+cd draco-0.1.3/
 
 # Install. (Use sudo if doas is not present)
 doas make install
 #+END_SRC
-* Dependencies
-** Unicode::LineBreak
-This is used to wrap the text at 76 columns. Draco can work without this
-module.
-** JSON::MaybeXS
-This module is required for Draco to work, it can be replaced with any
-other module that parses JSON & produces same data structure.
-** =HTTP::Tiny=
-Draco can work without this module if you can get the file some other
-way.
+* News
+** v0.2.0  2020-11-23
+This version makes the script lot more complex. If you download only
+small threads then this update is not required.
+
+Previous version (v0.1.3) might throw some errors on threads that have
+comments hidden behind "load more comments" but the rest of thread will
+be saved.
+
+This version will load all those comments hidden behind "load more
+comments". But not those hidden behind "continue this thread". This is a
+known bug.
+
++ Add "[S]" after submitter's comments.
++ Print comments hidden under "load more comments".
++ Document environment variables in manual.
++ Add "limit=500" & "sort=top" to all posts/comments.
++ Print more information when debug is on.
++ Add help option.

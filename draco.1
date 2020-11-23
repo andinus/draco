@@ -22,6 +22,14 @@ The options are as follows:
 Turn on debug messages. Debug messages will be printed to STDERR.
 .It Fl v
 Print version.
+.It Fl h
+Print this help.
+.Pp
+.Sh ENVIRONMENT VARIABLES
+.Bl -tag -width Ds
+.It FETCH_ALL
+Fetch all comments. This will make multiple HTTP calls to reddit. This
+doesn't fetch *all* the comments.
 .Sh NOTES
 Draco will add 2 spaces before every new line. Comments/Posts may
 contain `*' at the start of line & that confuses Org. Org might
@@ -32,6 +40,9 @@ every new line the maximum number of columns becomes 78.
 .Pp
 The date of archive is saved under :PROPERTIES: of the post as
 :ARCHIVE_DATE:.
+.Pp
+Total number of top level comments is saved under :PROPERTIES: of the
+post as :TOTAL_TOP_LEVEL_COMMENTS:.
 .Sh WHY?
 I reference things from the web in my Journal & don't want those links
 to break so I save them locally. Previously I used to manually archive
