@@ -86,14 +86,12 @@ print "* ", "[[$post->{url}][$post->{title}]]\n";
 
 # Add various details to :PROPERTIES:.
 print ":PROPERTIES:\n";
-# Include the created date, archive date & total top-level comments in
-# properties.
+# Include the created date & archive date in properties.
 print ":CREATED_UTC: ",
     Time::Piece->strptime($post->{created_utc}, '%s')
     ->strftime('%+'), "\n";
 
 print ":ARCHIVE_DATE: $current_date\n";
-print ":TOTAL_TOP_LEVEL_COMMENTS: ", scalar($comments->@*), "\n";
 foreach my $detail (qw( subreddit created_utc author permalink
                         upvote_ratio ups downs score )) {
     print ":${detail}: =$post->{$detail}=\n"
@@ -108,25 +106,28 @@ print "\n#+BEGIN_SRC markdown\n",
     "#+END_SRC\n"
     if scalar $post->{selftext};
 
-my (@http_calls, @shell_comments, %counter);
+my (@http_calls, %counter);
 $counter{print_comment_chain_call} = 0;
 $counter{iterate_over_comments_call} = 0;
 
 print_time() if $DEBUG;
 print STDERR "iterating over top-level comments.\n" if $DEBUG;
+
+# We are going to put a dot after each HTTP call.
+print STDERR "each dot is a HTTP call.\n" if $DEBUG;
+
 # Iterate over top-level comments. The second argument is level
 # (depth), it should be 0 for top-level comments.
 iterate_over_comments($comments, 0);
+
+# Seperate the dots from the rest by a line break.
+print STDERR "\n" if $DEBUG;
 print_time() if $DEBUG;
 
 # Print important stats.
 print STDERR "\n" if $DEBUG;
 print STDERR "total http calls: ",
     scalar @http_calls, "\n" if $DEBUG;
-print STDERR "total top-level comments: ",
-    scalar($comments->@*), "\n" if $DEBUG;
-print STDERR "total shell comments: ",
-    scalar @shell_comments, "\n" if $DEBUG and scalar @shell_comments;
 print STDERR "total print_comment_chain calls: ",
     $counter{print_comment_chain_call}, "\n" if $DEBUG;
 print STDERR "total iterate_over_comments calls: ",
@@ -141,6 +142,7 @@ sub print_time {
 
 sub get_response {
     my $url = shift @_;
+    print STDERR "." if $DEBUG;
     my $response = $http->get($url);
     push @http_calls, $url;
     die "Unexpected response - $response->{status}: $response->{reason} : $url"
@@ -164,6 +166,24 @@ sub get_comment_thread_from_id {
     $json_url .= "/" unless substr $url, -1 eq "/";
     $json_url .= "${comment_id}.json?limit=500&sort=top";
     return $json_url;
+}
+
+# This was being used multiple times so I moved it to a subroutine.
+# It'll take $comment_id & return $comments.
+sub get_all_comments_from_id {
+    my $comment_id = shift @_;
+    my $json_url = get_comment_thread_from_id($comment_id);
+
+    # Fetch the comment.
+    my $response = get_response($json_url);
+
+    # Decode json.
+    my $json_data = decode_json($response->{content});
+
+    # $comments contains comment data.
+    my $comments = $json_data->[1]->{data}->{children};
+
+    return $comments;
 }
 
 # First argument requires $comments & second is the level (depth).
@@ -197,16 +217,8 @@ sub iterate_over_comments {
             next unless $ENV{FETCH_ALL};
 
             unless ( eval {
-                my $json_url = get_comment_thread_from_id($comment_id);
-
-                # Fetch the comment.
-                my $response = get_response($json_url);
-
-                # Decode json.
-                my $json_data = decode_json($response->{content});
-
-                # $comments contains comment data.
-                my $comments = $json_data->[1]->{data}->{children};
+                # get $comments.
+                my $comments = get_all_comments_from_id($comment_id);
 
                 # 0th index will contain the comment we are looking for.
                 my $comment_data = $comments->[0]->{data};
@@ -238,8 +250,6 @@ sub iterate_over_comments {
         # by default & user has to pass `FETCH_ALL' to enable it.
         if ($comment->{kind} eq "more"
                 and $comment_data->{id}) {
-            push @shell_comments, $comment_data->{id};
-
             # Don't proceed unless user has set `FETCH_ALL'.
             next unless $ENV{FETCH_ALL};
 
@@ -269,18 +279,10 @@ sub iterate_over_comments {
             if ($comment_data->{children}
                 and scalar $comment_data->{children} < 2) {
                 unless ( eval {
-                    my $json_url = get_comment_thread_from_id(
+                    # get $comments.
+                    my $comments = get_all_comments_from_id(
                         $comment_data->{id}
                     );
-
-                    # Fetch the comment.
-                    my $response = get_response($json_url);
-
-                    # Decode json.
-                    my $json_data = decode_json($response->{content});
-
-                    # $comments contains comment data.
-                    my $comments = $json_data->[1]->{data}->{children};
 
                     # Now this is like a normal comment chain, i.e.
                     # first kind of comment. We just have to iterate
@@ -298,20 +300,9 @@ sub iterate_over_comments {
                 # will make one call for each comment, this can mean a
                 # lot of HTTP calls.
                 foreach my $comment_id ($comment_data->{children}->@*) {
-
                     unless ( eval {
-                        my $json_url = get_comment_thread_from_id(
-                            $comment_id
-                        );
-
-                        # Fetch the comment.
-                        my $response = get_response($json_url);
-
-                        # Decode json.
-                        my $json_data = decode_json($response->{content});
-
-                        # $comments contains comment data.
-                        my $comments = $json_data->[1]->{data}->{children};
+                        # get $comments.
+                        my $comments = get_all_comments_from_id($comment_id);
 
                         # Now this is like a normal comment chain, i.e.
                         # first kind of comment. We just have to iterate
