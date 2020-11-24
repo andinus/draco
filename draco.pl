@@ -186,8 +186,7 @@ sub iterate_over_comments {
         # 2nd -> 1st.
 
         # This comment we are skipping is the third kind of comment,
-        # i.e. comment hidden under "continue this thread". We can't
-        # parse it yet.
+        # i.e. comment hidden under "continue this thread".
         if ($comment->{kind} eq "more"
             and $comment_data->{id} eq "_") {
             # $comment_data->{parent_id} starts with "t1_" so we get
@@ -232,51 +231,109 @@ sub iterate_over_comments {
         }
 
         # These are second kind of comments, i.e. comments hidden
-        # under "load more comments". We can get it by making another
-        # HTTP call. This is skipped by default & user has to pass
-        # `FETCH_ALL' to enable it.
-        unless ($comment->{kind} eq "more"
-                and not $comment_data->{id}) {
+        # under "load more comments". Their kind is "more" & they have
+        # an id. This part is a bit complex so read the comments.
+        #
+        # We can get it by making another HTTP call. This is skipped
+        # by default & user has to pass `FETCH_ALL' to enable it.
+        if ($comment->{kind} eq "more"
+                and $comment_data->{id}) {
             push @shell_comments, $comment_data->{id};
 
             # Don't proceed unless user has set `FETCH_ALL'.
             next unless $ENV{FETCH_ALL};
 
-            unless ( eval {
-                my $json_url = get_comment_thread_from_id($comment_data->{id});
+            # The problem here is that if the thread is too large then
+            # at the end reddit will include similar block in which
+            # it'll put all other top-level comments in children of
+            # 2nd kind.
+            #
+            # "kind": "more",
+            # "data": {
+            # "id": "gde31fk",
+            # ...
+            # "children": [
+            # "gde31fk",
+            # "gdbrnyd",
+            # ...
+            #
+            # If the "load more comments" only hides a single thread
+            # then it's the only one included in "children". Note how
+            # the "id" & first element of "children" is same.
+            #
+            # So, reddit wants us to check for the length of this list
+            # "children", if it is greater than 1 then we need to pull
+            # those comments independently. If not then we just have
+            # to pull the "id".
 
-                # Fetch the comment.
-                my $response = get_response($json_url);
+            if ($comment_data->{children}
+                and scalar $comment_data->{children} < 2) {
+                unless ( eval {
+                    my $json_url = get_comment_thread_from_id(
+                        $comment_data->{id}
+                    );
 
-                # Decode json.
-                my $json_data = decode_json($response->{content});
+                    # Fetch the comment.
+                    my $response = get_response($json_url);
 
-                # $comments contains comment data. We are interested in: replies,
-                # author, body, created_utc & permalink.
-                my $comments = $json_data->[1]->{data}->{children};
+                    # Decode json.
+                    my $json_data = decode_json($response->{content});
 
-                # Now this is like a normal comment chain, i.e. first
-                # kind of comment. We just have to iterate over it &
-                # pass to print_comment_chain, iterate_over_comments
-                # will handle it.
-                iterate_over_comments($comments, $level);
-                return 1;
-            } ) {
-                my $err = $@;
-                print STDERR "parsing `$comment_data->{id}' failed: $err\n";
+                    # $comments contains comment data.
+                    my $comments = $json_data->[1]->{data}->{children};
+
+                    # Now this is like a normal comment chain, i.e.
+                    # first kind of comment. We just have to iterate
+                    # over it & pass to print_comment_chain,
+                    # iterate_over_comments will handle it.
+                    iterate_over_comments($comments, $level);
+                    return 1;
+                } ) {
+                    my $err = $@;
+                    warn "parsing `$comment_data->{id}' failed: $err\n";
+                }
+            } else {
+                # If we reach this block then it means that multiple
+                # comments are hiding under "load more comments", we
+                # will make one call for each comment, this can mean a
+                # lot of HTTP calls.
+                foreach my $comment_id ($comment_data->{children}->@*) {
+
+                    unless ( eval {
+                        my $json_url = get_comment_thread_from_id(
+                            $comment_id
+                        );
+
+                        # Fetch the comment.
+                        my $response = get_response($json_url);
+
+                        # Decode json.
+                        my $json_data = decode_json($response->{content});
+
+                        # $comments contains comment data.
+                        my $comments = $json_data->[1]->{data}->{children};
+
+                        # Now this is like a normal comment chain, i.e.
+                        # first kind of comment. We just have to iterate
+                        # over it & pass to print_comment_chain,
+                        # iterate_over_comments will handle it.
+                        iterate_over_comments($comments, $level);
+                        return 1;
+                    } ) {
+                        my $err = $@;
+                        warn "parsing `$comment_data->{id}' failed: $err\n";
+                    }
+                }
             }
-
-            # This comment thread has been parsed, move on to the text
+            # This comment thread has been parsed, move on to the next
             # one.
             next;
         }
-
         # This is first kind of comment, we can pass it directly to
         # print_comment_chain.
         print_comment_chain($comment_data, $level);
     }
 }
-
 
 # print_comment_chain will print the whole chain of comment while
 # accounting for level. It can only parse the first kind of comment,
