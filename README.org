@@ -70,6 +70,16 @@ sudo apt install libunicode-linebreak-perl libjson-maybexs-perl \
 sudo dnf install perl-JSON-MaybeXS perl-HTTP-Tiny perl-Unicode-LineBreak
 #+END_SRC
 * News
+** v0.2.1 - 2020-11-24
+Skip this version, don't update. It has fixed some bugs but introduces
+serious bugs.
+
++ Previously fetching comments hidden under "load more comments" would
+  fail if the url passed by user ends in "/". This has been fixed in
+  this release.
+*** Known bugs
++ All comments are parsed as top-level comments. This will be fixed in
+  newer releases.
 ** v0.2.0 - 2020-11-23
 This version makes the script lot more complex. If you download only
 small threads then this update is not required.
