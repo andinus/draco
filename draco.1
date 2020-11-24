@@ -13,13 +13,16 @@
 is a script to convert reddit thread to Org document. It accepts a url
 & prints the Org document to STDOUT.
 .Pp
-It'll also print comments along with their replies. It's limited by
-the reddit API.
+It'll also print comments along with their replies. The default is to
+print all comments that are included in first HTTP call. Some comments
+might not be included in it so user needs to set `FETCH_ALL' flag to
+fetch those comments. This is not the default because it might make
+multiple HTTP calls.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
-Turn on debug messages. Debug messages will be printed to STDERR.
+Turn on debug messages. Debug messages will be printed to STDERR. I
 .It Fl v
 Print version.
 .It Fl h
@@ -28,8 +31,8 @@ Print this help.
 .Sh ENVIRONMENT VARIABLES
 .Bl -tag -width Ds
 .It FETCH_ALL
-Fetch all comments. This will make multiple HTTP calls to reddit. This
-doesn't fetch *all* the comments.
+Fetch all comments. This might make multiple HTTP calls to reddit.
+This should fetch all the comments.
 .Sh NOTES
 Draco will add 2 spaces before every new line. Comments/Posts may
 contain `*' at the start of line & that confuses Org. Org might
@@ -40,6 +43,14 @@ every new line the maximum number of columns becomes 78.
 .Pp
 Check :PROPERTIES: section under Post & Comments. They include useful
 information.
+.Sh EXAMPLES
+.Bl -tag -width Ds
+.It FETCH_ALL=1 draco -d <reddit_url> > /tmp/thread.org
+Archive the whole thread to `/tmp/thread.org'. This might make
+multiple HTTP calls.
+.It draco -d <reddit_url> > /dev/null
+Archive the thread. This will only archive the comments that are
+included in first HTTP call.
 .Sh WHY?
 I reference things from the web in my Journal & don't want those links
 to break so I save them locally. Previously I used to manually archive
