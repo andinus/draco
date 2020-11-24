@@ -18,7 +18,7 @@ binmode(STDOUT, "encoding(UTF-8)");
 die "usage: draco [-dhv] <url>\n" unless scalar @ARGV;
 
 my $DEBUG;
-my $VERSION = "v0.2.0";
+my $VERSION = "v0.2.1";
 # Dispatch table to be parsed before url.
 my %dispatch = (
     '-v'  => sub { print "Draco $VERSION\n"; exit; },
@@ -138,22 +138,35 @@ sub get_response {
     return $response;
 }
 
+# There are 3 kind of comments.
+#
+# 1. normal comments (includes top-level comments).
+# 2. comments hidden under "load more comments".
+# 3. comments hidden under "continue this thread".
+
 # print_comment_chain will print the whole chain of comment while
 # accounting for level.
 sub print_comment_chain {
-    my $comment = shift @_;
+    # This was earlier called $comment & was changed to $comment_data
+    # to prevent confusion because it is $comment->{data}.
+    my $comment_data = shift @_;
     my $level = shift @_;
 
     $counter{print_comment_chain_call}++;
 
-    # $comment->{author} & $comment->{body} not being present means
-    # that it's a shell comment. We can get it by making another HTTP
-    # call.
-    unless ($comment->{author}) {
-        push @shell_comments, $comment->{id};
+    # $comment_data->{author} not being present means that it's a
+    # comment hidden under "load more comments". We can get it by
+    # making another HTTP call.
+    unless ($comment_data->{author}) {
+        push @shell_comments, $comment_data->{id};
         return unless $ENV{FETCH_ALL};
         unless ( eval {
-            my $json_url = "${url}/$comment->{id}.json?limit=500&sort=top";
+            # It'll fail if we fetch "${url}/$comment_data->{id}.json"
+            # & ${url} already has "/" at the end. So, we check if "/"
+            # is present, if not then we add it.
+            my $json_url = $url;
+            $json_url .= "/" unless substr $url, -1 eq "/";
+            $json_url .= "$comment_data->{id}.json?limit=500&sort=top";
 
             # Fetch the comment.
             my $response = get_response($json_url);
@@ -176,7 +189,8 @@ sub print_comment_chain {
 
             return 1;
         } ) {
-            print STDERR "parsing shell comment: $comment->{id} : failed\n";
+            my $err = $@;
+            print STDERR "parsing `$comment_data->{id}' failed: $err\n";
         }
 
         # This comment thread has been parsed, move on to the text
@@ -184,8 +198,8 @@ sub print_comment_chain {
         return;
     }
 
-    print "*" x ($level + 2), " ", "$comment->{author}";
-    print " [S]" if $comment->{is_submitter};
+    print "*" x ($level + 2), " ", "$comment_data->{author}";
+    print " [S]" if $comment_data->{is_submitter};
     print "\n";
 
     # Print comment details.
@@ -193,20 +207,20 @@ sub print_comment_chain {
     foreach my $detail (qw( created_utc author permalink upvote_ratio
                             ups downs score edited is_submitter
                             stickied controversiality )) {
-        print ":${detail}: =$comment->{$detail}=\n"
-            if scalar $comment->{$detail};
+        print ":${detail}: =$comment_data->{$detail}=\n"
+            if scalar $comment_data->{$detail};
     }
     print ":END:\n";
 
     print "\n#+BEGIN_SRC markdown\n",
         # Break the text at 76 column & add 2 space before every new
         # line.
-        "  ", $lb->break($comment->{body}) =~ s/\n/\n\ \ /gr, "\n",
+        "  ", $lb->break($comment_data->{body}) =~ s/\n/\n\ \ /gr, "\n",
         "#+END_SRC\n";
 
     # If the comment has replies then iterate over those too.
-    if (scalar $comment->{replies}) {
-        foreach my $reply ($comment->{replies}->{data}->{children}->@*) {
+    if (scalar $comment_data->{replies}) {
+        foreach my $reply ($comment_data->{replies}->{data}->{children}->@*) {
             if ($reply->{kind} eq "more"
                 and $reply->{data}->{id} eq "_") {
                 $counter{skipped_due_to_more}++;
