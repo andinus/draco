@@ -109,7 +109,6 @@ print "\n#+BEGIN_SRC markdown\n",
     if scalar $post->{selftext};
 
 my (@http_calls, @shell_comments, %counter);
-$counter{skipped_due_to_more} = 0;
 $counter{print_comment_chain_call} = 0;
 $counter{iterate_over_comments_call} = 0;
 
@@ -133,11 +132,6 @@ print STDERR "total print_comment_chain calls: ",
 print STDERR "total iterate_over_comments calls: ",
     $counter{iterate_over_comments_call}, "\n" if $DEBUG;
 
-# This is equivalent to "continue this thread ->" we see on
-# old.reddit.com threads.
-print STDERR "total comments skipped due to more: ",
-    $counter{skipped_due_to_more}, "\n" if $DEBUG;
-
 sub print_time {
     print STDERR "    ";
     print STDERR "time since [start, last log]: [", time - $start_time,
@@ -152,6 +146,24 @@ sub get_response {
     die "Unexpected response - $response->{status}: $response->{reason} : $url"
         unless $response->{success};
     return $response;
+}
+
+# Pass <comment id> as argument and it'll return you the json url to
+# that comment thread.
+sub get_comment_thread_from_id {
+    my $comment_id = shift @_;
+
+    # Reddit doesn't like this kind of url:
+    #     http://<reddit>/<post_id>//<comment_id>.json
+    #
+    # It wants this kind of url:
+    #     http://<reddit>/<post_id>/<comment_id>.json
+    #
+    # Notice the extra '/' in first url.
+    my $json_url = $url;
+    $json_url .= "/" unless substr $url, -1 eq "/";
+    $json_url .= "${comment_id}.json?limit=500&sort=top";
+    return $json_url;
 }
 
 # First argument requires $comments & second is the level (depth).
@@ -178,7 +190,44 @@ sub iterate_over_comments {
         # parse it yet.
         if ($comment->{kind} eq "more"
             and $comment_data->{id} eq "_") {
-            $counter{skipped_due_to_more}++;
+            # $comment_data->{parent_id} starts with "t1_" so we get
+            # the {id} from there.
+            my $comment_id = substr $comment_data->{parent_id}, 3;
+
+            # Don't proceed unless user has set `FETCH_ALL'.
+            next unless $ENV{FETCH_ALL};
+
+            unless ( eval {
+                my $json_url = get_comment_thread_from_id($comment_id);
+
+                # Fetch the comment.
+                my $response = get_response($json_url);
+
+                # Decode json.
+                my $json_data = decode_json($response->{content});
+
+                # $comments contains comment data.
+                my $comments = $json_data->[1]->{data}->{children};
+
+                # 0th index will contain the comment we are looking for.
+                my $comment_data = $comments->[0]->{data};
+
+                # We already have printed this comment so we will just
+                # look it has replies, if it does then we'll print
+                # those.
+                if (scalar $comment_data->{replies}) {
+                    iterate_over_comments(
+                        $comment_data->{replies}->{data}->{children},
+                        $level + 1);
+                }
+                return 1;
+            } ) {
+                my $err = $@;
+                print STDERR "parsing `$comment_id' failed: $err\n";
+            }
+
+            # This comment thread has been parsed, move on to the text
+            # one.
             next;
         }
 
@@ -186,23 +235,15 @@ sub iterate_over_comments {
         # under "load more comments". We can get it by making another
         # HTTP call. This is skipped by default & user has to pass
         # `FETCH_ALL' to enable it.
-        unless ($comment_data->{author}) {
+        unless ($comment->{kind} eq "more"
+                and not $comment_data->{id}) {
             push @shell_comments, $comment_data->{id};
 
             # Don't proceed unless user has set `FETCH_ALL'.
             next unless $ENV{FETCH_ALL};
 
             unless ( eval {
-                # Reddit doesn't like this kind of url:
-                #     http://<reddit>/<post_id>//<comment_id>.json
-                #
-                # It wants this kind of url:
-                #     http://<reddit>/<post_id>/<comment_id>.json
-                #
-                # Notice the extra '/' in first url.
-                my $json_url = $url;
-                $json_url .= "/" unless substr $url, -1 eq "/";
-                $json_url .= "$comment_data->{id}.json?limit=500&sort=top";
+                my $json_url = get_comment_thread_from_id($comment_data->{id});
 
                 # Fetch the comment.
                 my $response = get_response($json_url);
