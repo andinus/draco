@@ -70,6 +70,18 @@ sudo apt install libunicode-linebreak-perl libjson-maybexs-perl \
 sudo dnf install perl-JSON-MaybeXS perl-HTTP-Tiny perl-Unicode-LineBreak
 #+END_SRC
 * News
+** v0.3.0 - 2020-11-24
+This version adds code to fetch all the comments in a thread. Now users
+can archive the whole thread.
+
+Everyone should get this update, the code has become a lot more complex
+since v0.1.3. If you don't want to update then you can get the patches
+for small changes from the git history.
+
++ Fetch all the comments.
++ Add debug message for HTTP calls.
+  It'll print a "." for every HTTP call. Users will be able to tell when
+  the script is making HTTP calls.
 ** v0.2.2 - 2020-11-24
 This version is mostly structural changes, it'll now be easier to add
 code to fetch comments hidden behind "continue this thread".

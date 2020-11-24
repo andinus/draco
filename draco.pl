@@ -17,7 +17,7 @@ binmode(STDOUT, "encoding(UTF-8)");
 die "usage: draco [-dhv] <url>\n" unless scalar @ARGV;
 
 my $DEBUG;
-my $VERSION = "v0.2.2";
+my $VERSION = "v0.3.0";
 # Dispatch table to be parsed before url.
 my %dispatch = (
     '-v'  => sub { print "Draco $VERSION\n"; exit; },
@@ -36,7 +36,7 @@ Options:
 Environment Variables:
     FETCH_ALL
         Fetch all comments. This will make multiple HTTP calls to
-        reddit. This doesn't fetch *all* the comments.
+        reddit.
 };
                    exit;
                },
