@@ -364,10 +364,9 @@ sub print_comment_chain {
     print ":PROPERTIES:\n";
     print ":CREATED_UTC: ",
         Time::Piece->strptime($comment_data->{created_utc}, '%s')
-          ->strftime('%+'), "\n";
-    foreach my $detail (qw( created_utc author permalink upvote_ratio
-                            ups downs score edited stickied
-                            controversiality )) {
+          ->strftime('%+'), " (=$comment_data->{created_utc}=)\n";
+    foreach my $detail (qw( author permalink upvote_ratio ups downs
+                            score edited stickied controversiality )) {
         print ":${detail}: =$comment_data->{$detail}=\n"
             if scalar $comment_data->{$detail};
     }
