@@ -123,6 +123,11 @@ print STDERR "each dot is a HTTP call.\n"
 # Iterate over top-level comments. The second argument is level
 # (depth), it should be 0 for top-level comments.
 iterate_over_comments($comments, 0);
+
+# Seperate the dots with the rest by a "\n".
+print STDERR "\n"
+    if $DEBUG and $ENV{FETCH_ALL};
+
 print_time() if $DEBUG;
 
 # Print important stats.
@@ -144,7 +149,7 @@ sub print_time {
 sub get_response {
     my $url = shift @_;
     # Skip a dot on first HTTP call.
-    print STDERR ".\n" if $DEBUG and scalar @http_calls > 0;
+    print STDERR "." if $DEBUG and scalar @http_calls > 0;
     my $response = $http->get($url);
     push @http_calls, $url;
     die "Unexpected response - $response->{status}: $response->{reason} : $url"
@@ -236,7 +241,8 @@ sub iterate_over_comments {
                 return 1;
             } ) {
                 my $err = $@;
-                print STDERR "parsing `$comment_id' failed: $err\n";
+                # Keep the "\n" at the start.
+                warn "\nparsing `$comment_id' failed: $err\n";
             }
 
             # This comment thread has been parsed, move on to the text
@@ -294,7 +300,8 @@ sub iterate_over_comments {
                     return 1;
                 } ) {
                     my $err = $@;
-                    warn "parsing `$comment_data->{id}' failed: $err\n";
+                    # Keep the "\n" at the start.
+                    warn "\nparsing `$comment_data->{id}' failed: $err\n";
                 }
             } else {
                 # If we reach this block then it means that multiple
@@ -314,7 +321,8 @@ sub iterate_over_comments {
                         return 1;
                     } ) {
                         my $err = $@;
-                        warn "parsing `$comment_data->{id}' failed: $err\n";
+                        # Keep the "\n" at the start.
+                        warn "\nparsing `$comment_data->{id}' failed: $err\n";
                     }
                 }
             }
