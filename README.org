@@ -73,8 +73,8 @@ sudo dnf install perl-JSON-MaybeXS perl-HTTP-Tiny perl-Unicode-LineBreak
 ** v0.3.1 - 2020-11-25
 Minor improvement.
 
-+ Put author name in code block if it begins & ends with "_".
-  Org underlines headings that begin & end with "_".
++ Put author name in code block if it begins & ends with "=_=".
+  Org underlines headings that begin & end with "=_=".
 ** v0.3.0 - 2020-11-24
 This version adds code to fetch all the comments in a thread. Now users
 can archive the whole thread.
