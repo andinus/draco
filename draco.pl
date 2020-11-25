@@ -17,7 +17,7 @@ binmode(STDOUT, "encoding(UTF-8)");
 die "usage: draco [-dhv] <url>\n" unless scalar @ARGV;
 
 my $DEBUG;
-my $VERSION = "v0.3.0";
+my $VERSION = "v0.3.1";
 # Dispatch table to be parsed before url.
 my %dispatch = (
     '-v'  => sub { print "Draco $VERSION\n"; exit; },
@@ -113,15 +113,16 @@ $counter{iterate_over_comments_call} = 0;
 print_time() if $DEBUG;
 print STDERR "iterating over top-level comments.\n" if $DEBUG;
 
-# We are going to put a dot after each HTTP call.
-print STDERR "each dot is a HTTP call.\n" if $DEBUG;
+# We are going to put a dot after each HTTP call. Dot on first HTTP
+# call is skipped so we print this message only if user has set
+# `FETCH_ALL' because that'll be the reason Draco makes multiple HTTP
+# calls.
+print STDERR "each dot is a HTTP call.\n"
+    if $DEBUG and $ENV{FETCH_ALL};
 
 # Iterate over top-level comments. The second argument is level
 # (depth), it should be 0 for top-level comments.
 iterate_over_comments($comments, 0);
-
-# Seperate the dots from the rest by a line break.
-print STDERR "\n" if $DEBUG;
 print_time() if $DEBUG;
 
 # Print important stats.
@@ -142,7 +143,8 @@ sub print_time {
 
 sub get_response {
     my $url = shift @_;
-    print STDERR "." if $DEBUG;
+    # Skip a dot on first HTTP call.
+    print STDERR ".\n" if $DEBUG and scalar @http_calls > 0;
     my $response = $http->get($url);
     push @http_calls, $url;
     die "Unexpected response - $response->{status}: $response->{reason} : $url"
@@ -338,7 +340,15 @@ sub print_comment_chain {
 
     $counter{print_comment_chain_call}++;
 
-    print "*" x ($level + 2), " ", "$comment_data->{author}";
+    print "*" x ($level + 2), " ";
+    # If the author name starts & ends with "_" then Org will
+    # underline it, so we put those names in a code block.
+    if (substr($comment_data->{author}, 0, 1) eq "_"
+        and substr($comment_data->{author}, -1) eq "_") {
+        print "=$comment_data->{author}=";
+    } else {
+        print "$comment_data->{author}";
+    }
     print " [S]" if $comment_data->{is_submitter};
     print "\n";
 
