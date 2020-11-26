@@ -1,5 +1,6 @@
 #+SETUPFILE: ~/.emacs.d/org-templates/projects.org
 #+EXPORT_FILE_NAME: index
+#+OPTIONS: toc:1
 #+TITLE: Draco
 
 Draco is a script to convert reddit thread to Org document. It accepts a
@@ -17,16 +18,12 @@ the whole thread, this automates it.
 * Demo
 This was recorded with =asciinema(1)=.
 
-[[https://asciinema.org/a/375432][https://asciinema.org/a/375432.png]]
+[[https://asciinema.org/a/373860][https://asciinema.org/a/373860.png]]
 
 + Draco v0.3.2: https://asciinema.org/a/375432
 + Draco v0.1.2: https://asciinema.org/a/373860
 + Draco 2020-11-19: https://asciinema.org/a/373851
-
-+ alt-links (download)
-  - v0.3.2: https://andinus.nand.sh/static/draco/v0.3.2.cast
-  - v0.1.2: https://andinus.nand.sh/static/draco/v0.1.2.cast
-  - 2020-11-19: https://andinus.nand.sh/static/draco/2020-11-19.cast
++ alt-link (download): https://andinus.nand.sh/static/draco/
 * Installation
 Follow these instructions to get draco & then install the dependencies,
 they're listed below. All dependencies are in Debian & Fedora
