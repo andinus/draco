@@ -17,12 +17,14 @@ the whole thread, this automates it.
 * Demo
 This was recorded with =asciinema(1)=.
 
-[[https://asciinema.org/a/373860][https://asciinema.org/a/373860.png]]
+[[https://asciinema.org/a/375432][https://asciinema.org/a/375432.png]]
 
++ Draco v0.3.2: https://asciinema.org/a/375432
 + Draco v0.1.2: https://asciinema.org/a/373860
 + Draco 2020-11-19: https://asciinema.org/a/373851
 
 + alt-links (download)
+  - v0.3.2: https://andinus.nand.sh/static/draco/v0.3.2.cast
   - v0.1.2: https://andinus.nand.sh/static/draco/v0.1.2.cast
   - 2020-11-19: https://andinus.nand.sh/static/draco/2020-11-19.cast
 * Installation
