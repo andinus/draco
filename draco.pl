@@ -17,7 +17,7 @@ binmode(STDOUT, "encoding(UTF-8)");
 die "usage: draco [-dhv] <url>\n" unless scalar @ARGV;
 
 my $DEBUG;
-my $VERSION = "v0.3.1";
+my $VERSION = "v0.3.2";
 # Dispatch table to be parsed before url.
 my %dispatch = (
     '-v'  => sub { print "Draco $VERSION\n"; exit; },
