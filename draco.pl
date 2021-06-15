@@ -372,11 +372,11 @@ sub print_comment_chain {
     }
     print ":END:\n";
 
-    print "\n#+BEGIN_SRC markdown\n",
+    print "\n#+begin_src markdown\n",
         # Break the text at 76 column & add 2 space before every new
         # line.
         "  ", $lb->break($comment_data->{body}) =~ s/\n/\n\ \ /gr, "\n",
-        "#+END_SRC\n";
+        "#+end_src\n\n";
 
     # If the comment has replies then iterate over those too.
     if (scalar $comment_data->{replies}) {
