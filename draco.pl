@@ -152,7 +152,7 @@ sub get_response {
     print STDERR "." if $DEBUG and scalar @http_calls > 0;
     my $response = $http->get($url);
     push @http_calls, $url;
-    die "Unexpected response - $response->{status}: $response->{reason} : $url"
+    die "\nUnexpected response - $response->{status}: $response->{reason}\n$response->{content} : $url"
         unless $response->{success};
     return $response;
 }
