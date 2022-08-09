@@ -56,7 +56,7 @@ doas make install
 * Dependencies
 ** OpenBSD
 #+BEGIN_SRC sh
-doas pkg_add p5-Unicode-LineBreak p5-JSON-MaybeXS
+doas pkg_add p5-Unicode-LineBreak p5-JSON-MaybeXS p5-IO-Socket-SSL
 cpan install HTTP::Tiny
 #+END_SRC
 ** Debian (apt)
